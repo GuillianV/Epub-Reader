@@ -12,7 +12,7 @@ const __dirname = dirname(__filename);
 
 const dataPath = join(__dirname, "data");
 const inputPath = join(__dirname, "input");
-const filename = "book.epub"
+const filename = "japon.epub"
 
 const ReadEpubFile = async (filename, filepath) => {
 
@@ -35,6 +35,13 @@ const ReadEpubFile = async (filename, filepath) => {
 
 
     let epub = await EPub.createAsync(fullpath, join(dataPath, filenameWithoutExtension, "images"), join(dataPath, filenameWithoutExtension, "links"));
+
+    // epub.getFile("ebook_agoradventure_172x245mm_-_v22-1", (err,data)=>{
+    //     console.log(data)
+    //     fs.writeFileSync(join(dataPath,filenameWithoutExtension,"ebook_agoradventure_172x245mm_-_v22-1.xhtml"), data)
+    // })
+
+console.log(util.inspect(epub.manifest, false, 0, true /* enable colors */))
 
     Object.values(epub.manifest).forEach((item) => {
 
@@ -61,6 +68,7 @@ const ReadEpubFile = async (filename, filepath) => {
   
     app.get("/:chapter", (req, res) => {
 
+     
         epub.getChapterRaw(epub.flow[req.params.chapter ?? 0].id, (error, text) => {
 
 
@@ -76,8 +84,8 @@ const ReadEpubFile = async (filename, filepath) => {
 ReadEpubFile(filename, inputPath);
 
 
-app.use('/:asset', (req, res, next) => {
-  express.static(__dirname + '/data/book/images/'+ req.params.asset)(req, res, next);
+app.use('image/:asset', (req, res, next) => {
+  express.static(__dirname + '/data/japon/images/'+ req.params.asset)(req, res, next);
 });         
 
 
