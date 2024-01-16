@@ -50,6 +50,9 @@ export default class ManifestItem {
       hrefLastPath
     );
 
+   
+    this.order = item.order;
+    this.level = item.level;
     this.type = media[0]
     this.extension= extname(hrefLastPath)
     this.rawFileName= ePubOverlayConfig.rawFileName

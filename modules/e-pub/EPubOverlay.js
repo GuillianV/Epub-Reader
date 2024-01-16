@@ -72,6 +72,16 @@ export default class EPubOverlay {
     }
   }
 
+  chapters(){
+
+    if (this.isLoaded == false) {
+      console.error(chalk.red(`EPubOverlay is not loaded. init() first`));
+      return;
+    }
+
+    return this.manifestItems.filter(item => item.type == "application" && item.order != null && item.level != null).sort(item => item.order);
+  }
+
   async _downloadAsset(item, force = false) {
     try {
       if (item == null || item instanceof ManifestItem == false) {
