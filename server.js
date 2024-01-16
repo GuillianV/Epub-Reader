@@ -6,14 +6,12 @@ import * as fs from "fs";
 import { dirname, join, extname, resolve } from "path";
 // PORT
 const PORT = 3000;
-const filename = "book.epub";
-const rawFileName = filename.replaceAll(/\W/g, "");
 
 const app = express();
 
 const Main = async () => {
   const EpubConfig = new EPubOverlayConfig({
-    filename: "jap.epub",
+    filename: "book.epub",
     inputFolderPath: "./input",
     outputFolderPath: "./data",
   });
