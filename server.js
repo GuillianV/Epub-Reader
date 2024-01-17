@@ -5,6 +5,8 @@ import EPubOverlay from "./modules/e-pub/EPubOverlay.js";
 import * as fs from "fs";
 import { dirname, join, extname, resolve } from "path";
 import EPdfInstance from "./modules/pdf/EPdfInstance.js";
+import EPdfConfig from "./modules/pdf/EPdfConfig.js";
+
 
 // PORT
 const PORT = 3000;
@@ -13,7 +15,7 @@ const app = express();
 
 const Main = async () => {
     const EpubConfig = new EPubOverlayConfig({
-        filename: "japon.epub",
+        filename: "jap.epub",
         inputFolderPath: "./input",
         outputFolderPath: "./data",
     });
@@ -24,22 +26,40 @@ const Main = async () => {
     await EPubOverlayInstance.downloadAssets(false);
 
     const chapters = EPubOverlayInstance.chapters()
-    const epdfInstance = new EPdfInstance()
-    await epdfInstance.init()
-    console.log(chapters)
-    chapters.forEach(async (chapter) => {
 
-        const path = `http://localhost:${PORT}/book/${chapter.rawFileName}/${chapter.hrefLastPath}`
-        const output = join(chapter.outputPath,"pdf",chapter.order+".pdf")
-      
-        console.log(path)
-        epdfInstance.generatePDFfromPage(path,output)
-   
+  
+    const epdfInstanceConfig = new EPdfConfig({
+
+        filename: EpubConfig.rawFileName,
+        inputFolderPath: join(EpubConfig.outputFolderPath, EpubConfig.rawFileName),
+        outputFolderPath: join(EpubConfig.outputFolderPath, EpubConfig.rawFileName),
+
     })
 
-    await epdfInstance.close()
+
+
+    const epdfInstance = new EPdfInstance(epdfInstanceConfig)
+    await epdfInstance.init()
     
-    await epdfInstance.mergePDFs(join(EpubConfig.outputFolderPath,EpubConfig.rawFileName,"pdf"))
+    chapters.forEach((chapter) => {
+
+        
+
+        epdfInstance.addQueue({
+            htmlUrl :  `http://localhost:${PORT}/book/${chapter.rawFileName}/${chapter.hrefLastPath}`,
+            order:chapter.order
+        })
+   
+    })
+    await epdfInstance.startQueueSync()
+    await epdfInstance.mergePDFs()
+
+  
+    // .endQueue()
+
+    // await epdfInstance.close()
+    
+    // await epdfInstance.mergePDFs(join(EpubConfig.outputFolderPath,EpubConfig.rawFileName,"pdf"))
 
 };
 

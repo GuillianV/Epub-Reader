@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import PDFMerger from 'pdf-merger-js';
+import EPdfConfig from './EPdfConfig.js';
 import fs from 'fs';
 import { join, resolve } from 'path';
 let instance = null
@@ -7,20 +8,30 @@ let instance = null
 
 export default class EPdfInstance {
 
-    constructor() {
+    constructor(ePdfConfig) {
         if (instance !== null) {
             return instance
         }
         instance = this
 
+        if (ePdfConfig == null) {
+            console.log(chalk.red("EPdfConfig properties is null"))
+            throw new Error("EPdfConfig properties is null")
+        }
+
+        if (ePdfConfig instanceof EPdfConfig == false) {
+            console.log(chalk.red("EPdfConfig properties is not an instance of EPdfConfig"))
+            throw new Error("EPdfConfig properties is not an instance of EPdfConfig")
+        }
+
+        this.config = ePdfConfig
+        this.queue = []
     }
 
     async init() {
-        if (this.browser == null)
-            this.browser = await puppeteer.launch({
-                headless: "new"
-            });
-
+        this.browser = await puppeteer.launch({
+            headless: "new"
+        });
     }
 
     async close() {
@@ -31,36 +42,80 @@ export default class EPdfInstance {
 
     }
 
+    _queue() {
 
-    async generatePDFfromPage(url, outputPath) {
-        const page = await this.browser.newPage();
-        await page.goto(url);
-        await page.pdf({ path: outputPath, format: 'A4' });
+        return new Promise(async (resolve, reject) => {
+
+            if (this.queue.length > 0) {
+                const params = this.queue.shift()
+                await this.generatePDFfromPage({ ...params, outputPDFFolderPath: this.config.outputPDFFolderPath })
+                await this._queue().then(() => {
+                    resolve()
+                })
+            }else{
+           
+                resolve()
+            }
+                
+        })
+
     }
 
-    async generatePDFfromHTML(htmlContent, outputPath) {
-        const page = await this.browser.newPage();
-        await page.setContent(htmlContent);
-        await page.pdf({ path: outputPath, format: 'A4' });
+
+    async startQueueSync() {
+
+        await this._queue()
+       
+    }
+
+    async startQueue(callback) {
+
+        if(callback == null || typeof callback != "function")
+        {
+            console.log(chalk.red("callback is not a function"))
+            throw new Error("callback is not a function")
+        }
+
+        await this._queue()
+        callback()
+       
     }
 
 
-    async mergePDFs(path) {
+    addQueue(params) {
+        this.queue.push(params)
+    }
+
+    async generatePDFfromPage(params) {
+
+        const { htmlUrl, outputPDFFolderPath, order } = params
+
+        console.log(`Generating PDF n°${order}...`);
+        const page = await this.browser.newPage();
+        await page.goto(htmlUrl);
+        await page.pdf({ path: join(outputPDFFolderPath, order + ".pdf"), format: 'A4' });
+    }
+
+
+    async mergePDFs() {
 
         var merger = new PDFMerger();
 
-        if(!fs.existsSync(path))
-            fs.mkdirSync(path, {
+        if (!fs.existsSync(this.config.outputPDFFolderPath))
+            fs.mkdirSync(this.config.outputPDFFolderPath, {
                 recursive: true
             });
-        const files = fs.readdirSync(resolve(path));
-        const pdfs = []
-        files.forEach(file => {
-            return pdfs.push(
+
+
+        const filenames = fs.readdirSync(resolve(this.config.outputPDFFolderPath));
+        const files = []
+
+        filenames.forEach(filename => {
+            return files.push(
                 new Promise(async (resolve, reject) => {
 
                     try {
-                        await merger.add(join(path, file))
+                        await merger.add(join(this.config.outputPDFFolderPath, filename))
                         resolve()
                     } catch (err) {
                         reject()
@@ -70,9 +125,9 @@ export default class EPdfInstance {
 
         })
 
-        Promise.all(pdfs).then(async () => {
+        Promise.all(files).then(async () => {
 
-            // Set metadata
+            //TODO
             await merger.setMetadata({
                 producer: "pdf-merger-js based script",
                 author: "John Doe",
@@ -84,7 +139,7 @@ export default class EPdfInstance {
 
             // Export the merged PDF as a nodejs Buffer
             const mergedPdfBuffer = await merger.saveAsBuffer();
-            fs.writeFileSync(join(path, 'merged.pdf'), mergedPdfBuffer);
+            fs.writeFileSync(join(this.config.outputGeneratedFolderPath, 'merged.pdf'), mergedPdfBuffer);
         })
     }
 }

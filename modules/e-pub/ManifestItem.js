@@ -2,6 +2,11 @@ import { dirname, join, extname, resolve } from "path";
 import EPubOverlayConfig from "./EPubOverlayConfig.js";
 export default class ManifestItem {
   constructor(item, ePubOverlayConfig) {
+
+
+    if(item.mediaType.includes("application"))
+      console.log("item : ",item)
+
     if (item == null) {
       console.error(chalk.red(`item of ManifestItem is null`));
       throw new Error(`item of ManifestItem is null`);
