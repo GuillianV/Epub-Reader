@@ -10,7 +10,7 @@ import EPdfQueueConfig from "./modules/pdf/EPdfQueueConfig.js";
 
 
 // PORT
-const PORT = 3000;
+const PORT = 8457;
 
 const app = express();
 
@@ -63,11 +63,6 @@ const Main = async () => {
     await epdfInstance.downloadPDFsSync()
     await epdfInstance.mergePDFs()
     await epdfInstance.close()
-    
-    // .endQueue()
-
-   
-    // await epdfInstance.mergePDFs(join(EpubConfig.outputFolderPath,EpubConfig.rawFileName,"pdf"))
 
 };
 
