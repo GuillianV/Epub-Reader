@@ -1,11 +1,8 @@
 import { dirname, join, extname, resolve } from "path";
 import EPubOverlayConfig from "./EPubOverlayConfig.js";
 export default class ManifestItem {
-  constructor(item, ePubOverlayConfig) {
+  constructor(item, ePubOverlayConfig,forcedOrder = null) {
 
-
-    if(item.mediaType.includes("application"))
-      console.log("item : ",item)
 
     if (item == null) {
       console.error(chalk.red(`item of ManifestItem is null`));
@@ -55,9 +52,10 @@ export default class ManifestItem {
       hrefLastPath
     );
 
-   
+    
     this.order = item.order;
     this.level = item.level;
+    this.forcedOrder = forcedOrder
     this.type = media[0]
     this.extension= extname(hrefLastPath)
     this.rawFileName= ePubOverlayConfig.rawFileName

@@ -6,6 +6,7 @@ import * as fs from "fs";
 import { dirname, join, extname, resolve } from "path";
 import EPdfInstance from "./modules/pdf/EPdfInstance.js";
 import EPdfConfig from "./modules/pdf/EPdfConfig.js";
+import EPdfQueueConfig from "./modules/pdf/EPdfQueueConfig.js";
 
 
 // PORT
@@ -15,7 +16,7 @@ const app = express();
 
 const Main = async () => {
     const EpubConfig = new EPubOverlayConfig({
-        filename: "jap.epub",
+        filename: "book.epub",
         inputFolderPath: "./input",
         outputFolderPath: "./data",
     });
@@ -33,7 +34,13 @@ const Main = async () => {
         filename: EpubConfig.rawFileName,
         inputFolderPath: join(EpubConfig.outputFolderPath, EpubConfig.rawFileName),
         outputFolderPath: join(EpubConfig.outputFolderPath, EpubConfig.rawFileName),
-
+        forceDownload:false,
+        format:"A4",
+        landscape:false,
+        producer:"GVV",
+        author:"GVV",
+        title:"My pdf merged",
+        finalRawName:"Sipapdf"
     })
 
 
@@ -43,22 +50,23 @@ const Main = async () => {
     
     chapters.forEach((chapter) => {
 
-        
+        const queueConfig = new EPdfQueueConfig({
+            htmlUrl :`http://localhost:${PORT}/book/${chapter.rawFileName}/${chapter.hrefLastPath}`,
 
-        epdfInstance.addQueue({
-            htmlUrl :  `http://localhost:${PORT}/book/${chapter.rawFileName}/${chapter.hrefLastPath}`,
-            order:chapter.order
+            outputFolderPath : epdfInstance.config.outputPDFFolderPath,
+            order : chapter.order == null ? chapter.forcedOrder : chapter.order
         })
+      
+        epdfInstance.loadPDF(queueConfig)
    
     })
-    await epdfInstance.startQueueSync()
+    await epdfInstance.downloadPDFsSync()
     await epdfInstance.mergePDFs()
-
-  
+    await epdfInstance.close()
+    
     // .endQueue()
 
-    // await epdfInstance.close()
-    
+   
     // await epdfInstance.mergePDFs(join(EpubConfig.outputFolderPath,EpubConfig.rawFileName,"pdf"))
 
 };

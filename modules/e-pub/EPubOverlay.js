@@ -53,9 +53,12 @@ export default class EPubOverlay {
     }
 
     const items = Object.values(this.epub.manifest);
+    let applicationItemsLength= 0;
     for (let i = 0; i <items.length ; i++) {
       const item = items[i];
-      const itemData = new ManifestItem(item, this.config);
+      if(item.mediaType.includes("application"))
+        applicationItemsLength++;
+      const itemData = new ManifestItem(item, this.config,applicationItemsLength);
       this.manifestItems.push(itemData);
     }
   }
@@ -79,7 +82,14 @@ export default class EPubOverlay {
       return;
     }
 
-    return this.manifestItems.filter(item => item.type == "application" && item.order != null && item.level != null).sort(item => item.order);
+    let manifestItemsList = this.manifestItems.filter(item => item.type == "application" && item.extension == ".xhtml" && item.order != null && item.level != null)
+
+    if(manifestItemsList.length == 0){
+      manifestItemsList = this.manifestItems.filter(item => item.type == "application"&&  item.extension == ".xhtml" && item.forcedOrder != null)
+    }
+
+    
+    return manifestItemsList;
   }
 
   async _downloadAsset(item, force = false) {
